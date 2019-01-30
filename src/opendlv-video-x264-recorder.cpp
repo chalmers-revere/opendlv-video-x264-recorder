@@ -40,14 +40,15 @@ int32_t main(int32_t argc, char **argv) {
          (0 == commandlineArguments.count("width")) ||
          (0 == commandlineArguments.count("height")) ) {
         std::cerr << argv[0] << " attaches to an I420-formatted image residing in a shared memory area to convert it into a corresponding lossless h264 frame to store to a file." << std::endl;
-        std::cerr << "Usage:   " << argv[0] << " --name=<name of shared memory area> --width=<width> --height=<height> [--verbose] [--id=<identifier in case of multiple instances] [--cid=<OpenDaVINCI session to include Envelopes from the specified CID in the recording>] [--rec=MyFile.rec]" << std::endl;
-        std::cerr << "         --id:       when using several instances, this identifier is used as senderStamp" << std::endl;
-        std::cerr << "         --name:     name of the shared memory area to attach" << std::endl;
-        std::cerr << "         --width:    width of the frame" << std::endl;
-        std::cerr << "         --height:   height of the frame" << std::endl;
-        std::cerr << "         --verbose:  print encoding information" << std::endl;
-        std::cerr << "         --cid:      CID of the OD4Session to receive Envelopes to include in the recording file" << std::endl;
-        std::cerr << "         --rec:      name of the recording file; default: YYYY-MM-DD_HHMMSS.rec" << std::endl;
+        std::cerr << "Usage:   " << argv[0] << " --name=<name of shared memory area> --width=<width> --height=<height> [--verbose] [--id=<identifier in case of multiple instances] [--cid=<OpenDaVINCI session to include Envelopes from the specified CID in the recording>] [--rec=MyFile.rec] [--recsuffix=Suffix]" << std::endl;
+        std::cerr << "         --id:        when using several instances, this identifier is used as senderStamp" << std::endl;
+        std::cerr << "         --name:      name of the shared memory area to attach" << std::endl;
+        std::cerr << "         --width:     width of the frame" << std::endl;
+        std::cerr << "         --height:    height of the frame" << std::endl;
+        std::cerr << "         --verbose:   print encoding information" << std::endl;
+        std::cerr << "         --cid:       CID of the OD4Session to receive Envelopes to include in the recording file" << std::endl;
+        std::cerr << "         --rec:       name of the recording file; default: YYYY-MM-DD_HHMMSS.rec" << std::endl;
+        std::cerr << "         --recsuffix: additional suffix to add to the .rec file" << std::endl;
         std::cerr << "Example: " << argv[0] << " --name=data --width=640 --height=480 --verbose" << std::endl;
     }
     else {
@@ -75,13 +76,14 @@ int32_t main(int32_t argc, char **argv) {
         };
 
         const std::string NAME{commandlineArguments["name"]};
+        const std::string RECSUFFIX{commandlineArguments["recsuffix"]};
         const uint32_t WIDTH{static_cast<uint32_t>(std::stoi(commandlineArguments["width"]))};
         const uint32_t HEIGHT{static_cast<uint32_t>(std::stoi(commandlineArguments["height"]))};
         const uint32_t GOP{1};
         const bool VERBOSE{commandlineArguments.count("verbose") != 0};
         const uint32_t ID{(commandlineArguments["id"].size() != 0) ? static_cast<uint32_t>(std::stoi(commandlineArguments["id"])) : 0};
         const uint32_t CID{(commandlineArguments["cid"].size() != 0) ? static_cast<uint32_t>(std::stoi(commandlineArguments["cid"])) : 0};
-        const std::string NAME_RECFILE{(commandlineArguments["rec"].size() != 0) ? commandlineArguments["rec"] : (getYYYYMMDD_HHMMSS() + ".rec")};
+        const std::string NAME_RECFILE{(commandlineArguments["rec"].size() != 0) ? commandlineArguments["rec"] + "-" + RECSUFFIX : (getYYYYMMDD_HHMMSS() + "-" + RECSUFFIX + ".rec")};
 
         std::unique_ptr<cluon::SharedMemory> sharedMemory(new cluon::SharedMemory{NAME});
         if (sharedMemory && sharedMemory->valid()) {
