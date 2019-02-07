@@ -148,7 +148,7 @@ int32_t main(int32_t argc, char **argv) {
             std::mutex recFileMutex{};
             std::fstream recFile(NAME_RECFILE.c_str(), std::ios::out|std::ios::binary|std::ios::trunc);
             if (recFile.good()) {
-                cluon::data::TimeStamp before, after, sampleTimeStamp;
+                cluon::data::TimeStamp before, after, afterWriting, sampleTimeStamp;
 
                 // Interface to a running OpenDaVINCI session (ignoring any incoming Envelopes).
                 std::unique_ptr<cluon::OD4Session> od4{nullptr};
@@ -215,10 +215,14 @@ int32_t main(int32_t argc, char **argv) {
                             std::string serializedData{cluon::serializeEnvelope(std::move(envelope))};
                             recFile.write(serializedData.data(), serializedData.size());
                             recFile.flush();
+
+                            if (VERBOSE) {
+                                afterWriting = cluon::time::now();
+                            }
                         }
 
                         if (VERBOSE) {
-                            std::clog << "[opendlv-video-x264-recorder]: Frame size = " << data.size() << " bytes; sample time = " << cluon::time::toMicroseconds(sampleTimeStamp) << " microseconds; encoding took " << cluon::time::deltaInMicroseconds(after, before) << " microseconds." << std::endl;
+                            std::clog << "[opendlv-video-x264-recorder]: Frame size = " << data.size() << " bytes; sample time = " << cluon::time::toMicroseconds(sampleTimeStamp) << " microseconds; encoding took " << cluon::time::deltaInMicroseconds(after, before) << " microseconds; encoding+writing took " << cluon::time::deltaInMicroseconds(afterWriting, before) << " microseconds." << std::endl;
                         }
                     }
                 }
