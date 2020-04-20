@@ -49,6 +49,7 @@ int32_t main(int32_t argc, char **argv) {
         std::cerr << "         --cid:       CID of the OD4Session to receive Envelopes to include in the recording file" << std::endl;
         std::cerr << "         --rec:       name of the recording file; default: YYYY-MM-DD_HHMMSS.rec" << std::endl;
         std::cerr << "         --recsuffix: additional suffix to add to the .rec file" << std::endl;
+        std::cerr << "         --lossless:  encode in lossless format" << std::endl;
         std::cerr << "Example: " << argv[0] << " --name=data --width=640 --height=480 --verbose" << std::endl;
     }
     else {
@@ -84,6 +85,7 @@ int32_t main(int32_t argc, char **argv) {
         const uint32_t ID{(commandlineArguments["id"].size() != 0) ? static_cast<uint32_t>(std::stoi(commandlineArguments["id"])) : 0};
         const uint32_t CID{(commandlineArguments["cid"].size() != 0) ? static_cast<uint32_t>(std::stoi(commandlineArguments["cid"])) : 0};
         const std::string NAME_RECFILE{(commandlineArguments["rec"].size() != 0) ? commandlineArguments["rec"] + "-" + RECSUFFIX : (getYYYYMMDD_HHMMSS() + "-" + RECSUFFIX + ".rec")};
+        const bool LOSSLESS{commandlineArguments.count("lossless") != 0};
 
         std::unique_ptr<cluon::SharedMemory> sharedMemory(new cluon::SharedMemory{NAME});
         if (sharedMemory && sharedMemory->valid()) {
@@ -99,7 +101,7 @@ int32_t main(int32_t argc, char **argv) {
             parameters.i_height = HEIGHT;
             parameters.i_log_level = (VERBOSE ? X264_LOG_INFO : X264_LOG_NONE);
             parameters.i_csp = X264_CSP_I420;
-            {
+            if (LOSSLESS) {
                 // Settings for lossless encoding:
                 parameters.rc.i_rc_method = X264_RC_CQP;
                 parameters.rc.i_qp_constant = 0;
@@ -113,9 +115,17 @@ int32_t main(int32_t argc, char **argv) {
             parameters.b_vfr_input = 0;
             parameters.b_repeat_headers = 1;
             parameters.b_annexb = 1;
-            if (0 != x264_param_apply_profile(&parameters, "high444")) {
-                std::cerr << "[opendlv-video-x264-recorder]:Failed to apply parameters for x264." << std::endl;
-                return 1;
+            if (LOSSLESS) {
+                if (0 != x264_param_apply_profile(&parameters, "high444")) {
+                    std::cerr << "[opendlv-video-x264-recorder]:Failed to apply parameters for x264." << std::endl;
+                    return 1;
+                }
+            }
+            else {
+                if (0 != x264_param_apply_profile(&parameters, "baseline")) {
+                    std::cerr << "[opendlv-video-x264-encoder]:Failed to apply parameters for x264." << std::endl;
+                    return 1;
+                }
             }
 
             // Initialize picture to pass YUV420 data into encoder.
