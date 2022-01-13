@@ -1,4 +1,4 @@
-# Copyright (C) 2019  Christian Berger
+# Copyright (C) 2022  Christian Berger
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Part to build opendlv-video-x264-recorder.
-FROM alpine:latest as builder
+FROM alpine:3.15 as builder
 MAINTAINER Christian Berger "christian.berger@gu.se"
 
 RUN apk update && \
@@ -51,10 +51,9 @@ RUN mkdir build && \
 
 
 # Part to deploy opendlv-video-x264-recorder.
-FROM alpine:latest
+FROM alpine:3.15
 MAINTAINER Christian Berger "christian.berger@gu.se"
 
 WORKDIR /usr/bin
 COPY --from=builder /tmp/bin/opendlv-video-x264-recorder .
 ENTRYPOINT ["/usr/bin/opendlv-video-x264-recorder"]
-
